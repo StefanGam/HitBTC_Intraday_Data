@@ -1,4 +1,6 @@
 requests
 pandas
 pyarrow
-
+jupyter
+nbconvert
+ipykernel
