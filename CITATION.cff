@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this dataset, please cite it as below."
+title: "CryptoTick: Automated Intraday Cryptocurrency Tick Data from HitBTC"
+authors:
+  - family-names: "Gaman"
+    given-names: "Stefan"
+repository-code: "https://github.com/StefanGam/HitBTC_Intraday_Data"
+abstract: "Automated tick-level intraday cryptocurrency trade data from HitBTC, stored as one parquet file per coin per day and published through GitHub Releases."
+keywords:
+  - cryptocurrency
+  - tick data
+  - intraday
+  - HitBTC
+  - parquet
+license: MIT
