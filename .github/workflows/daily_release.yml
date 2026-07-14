@@ -1,0 +1,69 @@
+name: Daily HitBTC Incremental Release
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hitbtc-daily
+  cancel-in-progress: false
+
+jobs:
+  update-and-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run daily update
+        run: python hitbtc_pipeline.py update
+
+      - name: Set release tag
+        id: vars
+        run: echo "tag=daily-$(date -u +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
+      - name: Zip only newly created parquet files
+        run: |
+          mkdir -p release_assets
+          for coin_dir in data/HitBTC_Intraday_Data/*/; do
+            [ -d "$coin_dir" ] || continue
+            coin=$(basename "$coin_dir")
+            new_files=$(find "$coin_dir" -name "*.parquet" -mtime -1)
+            if [ -n "$new_files" ]; then
+              zip -j "release_assets/${coin}_${{ steps.vars.outputs.tag }}.zip" $new_files
+            fi
+          done
+          ls -la release_assets
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: "HitBTC incremental data ${{ steps.vars.outputs.tag }}"
+          body: |
+            Incremental daily snapshot: only the new coin-day parquet files created on this run.
+            Full-history archives are published separately.
+          files: release_assets/*.zip
+
+      - name: Commit manifest and logs only
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Daily manifest update ${{ steps.vars.outputs.tag }}"
+          file_pattern: "data/manifest/*.txt logs/*.log"
+          branch: master
