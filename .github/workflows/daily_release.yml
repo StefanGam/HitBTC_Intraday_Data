@@ -32,7 +32,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run daily update
-        run: jupyter nbconvert --to notebook --execute HitBTC_intraday_data.ipynb --output executed_notebook.ipynb
+        run: python hitbtc_pipeline.py update
 
       - name: Set release tag
         id: vars
